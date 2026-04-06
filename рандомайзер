@@ -1,0 +1,75 @@
+import random
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, CallbackContext
+from PIL import Image, ImageDraw, ImageFont
+import io
+
+saved_number = None
+
+def generate_image(number):
+    image = Image.new('RGB', (400, 200), color='white')
+    draw = ImageDraw.Draw(image)
+
+    try:
+        font = ImageFont.truetype("arial.ttf", 60)
+    except:
+        font = ImageFont.load_default()
+
+    draw.text((120, 70), str(number), fill='blue', font=font)
+
+    buffer = io.BytesIO()
+    image.save(buffer, format='PNG')
+    buffer.seek(0)
+    return buffer
+
+def get_number():
+    global saved_number
+    if saved_number is not None:
+        return saved_number
+    return random.randint(1, 1000)
+
+def send_number(update, context):
+    number = get_number()
+    img = generate_image(number)
+
+    keyboard = [
+        [InlineKeyboardButton("🔄 Ещё раз", callback_data="reroll")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    if update.message:
+        update.message.reply_photo(photo=img, reply_markup=reply_markup)
+    else:
+        update.callback_query.message.reply_photo(photo=img, reply_markup=reply_markup)
+
+def start(update: Update, context: CallbackContext):
+    send_number(update, context)
+
+def reroll(update: Update, context: CallbackContext):
+    query = update.callback_query
+    query.answer()
+    send_number(update, context)
+
+def set_number(update: Update, context: CallbackContext):
+    global saved_number
+
+    if context.args:
+        saved_number = int(context.args[0])
+        update.message.reply_text(f"Установлено число: {saved_number}")
+    else:
+        saved_number = None
+        update.message.reply_text("Режим сброшен (снова рандом)")
+
+def main():
+    updater = Updater("8140104780:AAHa2tFRilDE_OGeegzYndoESRv-AenA7oc)
+    dp = updater.dispatcher
+
+    dp.add_handler(CommandHandler("start", start))
+    dp.add_handler(CommandHandler("set", set_number))
+    dp.add_handler(CallbackQueryHandler(reroll, pattern="reroll"))
+
+    updater.start_polling()
+    updater.idle()
+
+if name == "main":
+    main()
