@@ -6,6 +6,7 @@ import io
 
 saved_number = None
 
+
 def generate_image(number):
     image = Image.new('RGB', (400, 200), color='white')
     draw = ImageDraw.Draw(image)
@@ -22,13 +23,15 @@ def generate_image(number):
     buffer.seek(0)
     return buffer
 
+
 def get_number():
     global saved_number
     if saved_number is not None:
         return saved_number
     return random.randint(1, 1000)
 
-def send_number(update, context):
+
+def send_number(update: Update, context: CallbackContext):
     number = get_number()
     img = generate_image(number)
 
@@ -42,13 +45,16 @@ def send_number(update, context):
     else:
         update.callback_query.message.reply_photo(photo=img, reply_markup=reply_markup)
 
+
 def start(update: Update, context: CallbackContext):
     send_number(update, context)
+
 
 def reroll(update: Update, context: CallbackContext):
     query = update.callback_query
     query.answer()
     send_number(update, context)
+
 
 def set_number(update: Update, context: CallbackContext):
     global saved_number
@@ -58,10 +64,11 @@ def set_number(update: Update, context: CallbackContext):
         update.message.reply_text(f"Установлено число: {saved_number}")
     else:
         saved_number = None
-        update.message.reply_text("Режим сброшен (снова рандом)")
+        update.message.reply_text("Режим сброшен (рандом)")
+
 
 def main():
-    updater = Updater("8140104780:AAHa2tFRilDE_OGeegzYndoESRv-AenA7oc)
+    updater = Updater("8140104780:AAHa2tFRilDE_OGeegzYndoESRv-AenA7oc", use_context=True)
     dp = updater.dispatcher
 
     dp.add_handler(CommandHandler("start", start))
@@ -70,6 +77,7 @@ def main():
 
     updater.start_polling()
     updater.idle()
+
 
 if name == "main":
     main()
