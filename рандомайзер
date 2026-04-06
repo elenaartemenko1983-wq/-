@@ -1,8 +1,14 @@
 import random
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, CallbackContext
-from PIL import Image, ImageDraw, ImageFont
 import io
+from PIL import Image, ImageDraw, ImageFont
+
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import (
+    ApplicationBuilder,
+    CommandHandler,
+    CallbackQueryHandler,
+    ContextTypes
+)
 
 saved_number = None
 
@@ -31,7 +37,7 @@ def get_number():
     return random.randint(1, 1000)
 
 
-def send_number(update: Update, context: CallbackContext):
+async def send_number(update: Update, context: ContextTypes.DEFAULT_TYPE):
     number = get_number()
     img = generate_image(number)
 
@@ -41,42 +47,41 @@ def send_number(update: Update, context: CallbackContext):
     reply_markup = InlineKeyboardMarkup(keyboard)
 
     if update.message:
-        update.message.reply_photo(photo=img, reply_markup=reply_markup)
+        await update.message.reply_photo(photo=img, reply_markup=reply_markup)
     else:
-        update.callback_query.message.reply_photo(photo=img, reply_markup=reply_markup)
+        await update.callback_query.message.reply_photo(photo=img, reply_markup=reply_markup)
 
 
-def start(update: Update, context: CallbackContext):
-    send_number(update, context)
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await send_number(update, context)
 
 
-def reroll(update: Update, context: CallbackContext):
+async def reroll(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
-    query.answer()
-    send_number(update, context)
+    await query.answer()
+    await send_number(update, context)
 
 
-def set_number(update: Update, context: CallbackContext):
+async def set_number(update: Update, context: ContextTypes.DEFAULT_TYPE):
     global saved_number
 
     if context.args:
         saved_number = int(context.args[0])
-        update.message.reply_text(f"Установлено число: {saved_number}")
+        await update.message.reply_text(f"Установлено число: {saved_number}")
     else:
         saved_number = None
-        update.message.reply_text("Режим сброшен (рандом)")
+        await update.message.reply_text("Режим сброшен (рандом)")
 
 
 def main():
-    updater = Updater("8140104780:AAHa2tFRilDE_OGeegzYndoESRv-AenA7oc", use_context=True)
-    dp = updater.dispatcher
+    app = ApplicationBuilder().token("8140104780:AAHa2tFRilDE_OGeegzYndoESRv-AenA7oc").build()
 
-    dp.add_handler(CommandHandler("start", start))
-    dp.add_handler(CommandHandler("set", set_number))
-    dp.add_handler(CallbackQueryHandler(reroll, pattern="reroll"))
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("set", set_number))
+    app.add_handler(CallbackQueryHandler(reroll, pattern="reroll"))
 
-    updater.start_polling()
-    updater.idle()
+    print("Bot started...")
+    app.run_polling()
 
 
 if name == "main":
