@@ -1,5 +1,6 @@
 import random
 import io
+import os
 from PIL import Image, ImageDraw, ImageFont
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
@@ -74,7 +75,8 @@ async def set_number(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 def main():
-    app = ApplicationBuilder().token("8140104780:AAHa2tFRilDE_OGeegzYndoESRv-AenA7oc").build()
+    token = os.getenv("TOKEN")
+    app = ApplicationBuilder().token(token).build()
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("set", set_number))
